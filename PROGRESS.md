@@ -53,6 +53,24 @@
   버전**으로 캡처한 결과였음 (매번 보내드린 zip을 압축 해제해서 덮어쓰는 과정이 누락된 것으로
   보임). → 두 번째 "실패"는 ChArUco 방식의 실패가 아니라 아직 시도조차 안 된 것이었다는 뜻.
   파일 동기화 후 ChArUco 방식을 실제로 처음 시도하게 됨.
+- **GitHub 업로드 진행**: `.gitignore`(캡처/캘리브레이션 이미지·결과물 제외), `PROGRESS.md`(이 로그를
+  저장소용으로 복사) 추가. 사용자 컴퓨터 원격 셸(`device_bash`)이 2026-09-08 Windows 업데이트로 인한
+  알려진 문제로 사용 불가 상태라 `git` 명령을 대신 실행해줄 수 없었음 → 대신 `device_commit_files`로
+  파일 20개(코드/문서/보드 이미지/`.gitkeep`)를 사용자 컴퓨터의 실제 경로에 하나씩 직접 써서 동기화
+  완료(캡처 이미지 등 다른 파일은 건드리지 않음). `git init`/`add`/`commit`/`remote add`/`push`는
+  사용자가 안내받은 명령어를 직접 실행하는 방식으로 진행.
+- **GitHub 최초 업로드 완료 → 저장소 용량 이상(60.96MiB/274개 오브젝트) 발견 → 원인 규명 및 정리**:
+  처음 커밋한 `.gitignore`가 `data/calibration_images/cam0`,`cam1`,`cam2`만 제외했는데, 실제
+  스테레오 캘리브레이션 촬영 이미지는 `calibrate_stereo.py`가 그와 다른
+  `data/calibration_images/stereo_0_1/`, `stereo_0_2/` 폴더에 저장하고 있어서 걸러지지 않고
+  그대로 커밋됨(체커보드+ChArUco 두 차례 시도분 합쳐 200장 이상 추정). `.gitignore`를
+  `data/calibration_images/**` 같은 재귀 패턴(+`.gitkeep`만 예외)으로 고쳐서 어떤 하위 폴더가
+  생기든 걸리도록 수정. 이미 커밋된 사진은 `git rm -r --cached`로 인덱스에서만 제거(실제 파일은
+  디스크에 그대로 유지됨 — 삭제 아님) 후 `git commit --amend` + `git push --force`로 저장소를
+  처음부터 다시 씀(커밋 1개뿐인 갓 만든 개인 저장소라 안전하게 가능). 정리 중 데스크톱 앱이
+  전달 파일을 자동 저장하는 `Claude outputs/mini3d_scanner.zip`(프로젝트 소스 아님)도 같이
+  발견되어 `.gitignore`에 추가 후 동일한 방식으로 제거. 최종적으로 21개 파일, 39.56KiB, 28개
+  오브젝트로 정상화하여 https://github.com/hoooni10099/OpenCV_3D_Scanner 에 깨끗하게 업로드 완료.
 
 ### 다음 작업 (To-do)
 - [x] `python src/utils/list_cameras.py --preview`로 카메라 인덱스 ↔ 물리 카메라 매핑 확인 및 지원 해상도 점검
@@ -72,8 +90,12 @@
 - [ ] 포인트 클라우드 생성 (`triangulate.py`)
 - [ ] 포인트 클라우드 확인 (`view_pointcloud_matplotlib.py` — Open3D 없이도 가능)
 - [ ] 전체 파이프라인 1회 완주 후, 결과 보고 캘리브레이션/삼각측량 품질 개선 필요 여부 판단
-- [x] 사용자 컴퓨터(`C:\Temp\python\mini3d_scanner`) 연결 후 최신 코드로 동기화 + GitHub 저장소
-      (`hoooni10099/OpenCV_3D_Scanner`)에 최초 업로드
+- [x] 사용자 컴퓨터(`C:\Temp\python\mini3d_scanner`) 연결 후 최신 코드로 동기화 (`device_commit_files`로
+      20개 파일 직접 전송, `.gitignore`/`PROGRESS.md` 포함)
+- [x] 안내받은 명령어로 `git init` / `add` / `commit` / `remote add` / `push` 직접 실행하여
+      GitHub 저장소(`hoooni10099/OpenCV_3D_Scanner`)에 최초 업로드 (원격 셸 장애로 대행 불가)
+- [x] 저장소 용량 이상(60.96MiB) 발견 후 원인(캘리브레이션 사진 누락 필터링) 규명, `.gitignore` 수정,
+      `git rm --cached` + `commit --amend` + `push --force`로 정리 → 21개 파일/39.56KiB로 정상화
 - [ ] **ChArUco 보드로 스테레오 캘리브레이션 실제로 재시도** (지금까지는 옛날 체커보드 버전으로
       실행되고 있었음이 확인됨 — 진짜 ChArUco 결과는 아직 없음)
 - [ ] (위에서도 RMS 높으면) 카메라 미러링 여부 확인, 보드를 완전히 정지한 채로 재촬영
@@ -88,5 +110,7 @@
 | 해결됨 | 프린터가 없어 종이 체커보드를 준비할 수 없음 | `generate_checkerboard.py`로 체커보드 PNG 생성 후 모니터/태블릿/휴대폰 화면에 띄워서 종이 대신 사용하기로 함. 화면마다 픽셀 밀도가 달라 자로 실측한 정사각형 크기(mm)를 `--square`에 입력해야 함. |
 | 해결됨 | **스테레오 캘리브레이션 RMS가 25~28px로 폭발** (cam0-1: 28.26, cam0-2: 24.91 — 정상은 1px 이하). 단일 카메라 캘리브레이션은 3대 모두 0.4px대로 정상이었는데 스테레오만 비정상적으로 큼 | 원인: 일반 체커보드는 180도 회전해도 똑같이 생겨서, 서로 각도 차이가 큰(~50도) 두 카메라가 동시에 같은 체커보드를 보면 OpenCV의 findChessboardCorners가 두 이미지에서 코너를 반대 순서로 인식하는 경우가 흔함 → objpoints[i]가 imgpoints_a[i]/imgpoints_b[i]에서 서로 다른 물리적 코너를 가리키게 되어 계산이 틀어짐 (단일 카메라 캘리브레이션은 카메라 하나 안에서만 자기 일관적이면 되므로 이 문제와 무관). 호모그래피 기반으로 순서를 자동 판별하는 방법을 먼저 시도했으나, 합성 데이터로 검증한 결과 정사각형 격자는 반전된 순서도 호모그래피 상 완전히 유효해서 구분이 원천적으로 불가능함을 확인 (실패). 최종 해결: **ChArUco 보드**(체커보드+ArUco 마커)로 전환 — 각 코너가 고유 ID를 가져 시점에 관계없이 correspondence가 명확함. `src/utils/generate_charuco_board.py` 신설, `calibrate_stereo.py`를 ChArUco 검출(`cv2.aruco.CharucoDetector`) + ID 매칭 방식으로 전면 재작성. 합성 테스트로 서로 다른 두 시점 간 ID 매칭 정확도 서브픽셀(~0.2px) 수준 확인. 기존 단일 카메라 캘리브레이션(K, dist)은 보드 종류와 무관하게 유효하므로 재작업 불필요. 단, 스테레오 캘리브레이션은 ChArUco 보드로 재촬영 필요 (기존 체커보드 사진 재사용 불가). |
 | 원인 파악됨 (재시도 대기) | **ChArUco로 바꾼 뒤에도 RMS가 더 나빠짐** (cam0-1: 62.51 → 62쌍, cam0-2: 82.39 → 59쌍). ID 기반 correspondence는 합성 테스트로 이미 정확함을 확인했었기 때문에(서브픽셀 수준), 코너 매칭 자체가 원인일 가능성은 낮음 | 처음엔 "카메라 비동기 캡처로 인한 타이밍 불일치"를 유력한 원인으로 보고 `calibrate_stereo.py`에 (1) `cv2.stereoCalibrateExtended`로 프레임별 재투영 오차 계산 + 임계값(`--outlier-threshold-px`, 기본 3px) 초과 프레임 자동 제거 반복 로직, (2) `cv2.CAP_PROP_BUFFERSIZE=1` 설정을 추가했음(합성 테스트로 유효성 검증 완료, 정상 프레임 사이 나쁜 프레임 1개를 정확히 찾아 제거하고 RMS를 0에 가깝게 회복). **그런데 GitHub 업로드 준비 중 사용자 컴퓨터를 확인해보니 진짜 원인이 따로 있었음**: 그 RMS 62.51/82.39는 ChArUco 버전이 아니라 여전히 **맨 처음의 일반 체커보드 버전**으로 캡처한 결과였음 (아래 새 이슈 항목 참고). 즉 ChArUco 방식은 아직 실제로 검증되지 않음 — 진단/이상치 제거 기능은 여전히 유용하지만, RMS 62/82의 직접 원인은 아니었을 가능성이 높음. 파일 동기화 완료 후 ChArUco로 재시도 예정. |
-| 해결됨 | **사용자 컴퓨터의 로컬 프로젝트 폴더가 매번 전달한 zip 내용으로 갱신되지 않고 있었음** — `calibrate_stereo.py`가 7,203바이트(최초 일반 체커보드 버전 그대로, 최신본은 15,889바이트)였고 `generate_charuco_board.py`/`data/charuco_10x7.png`가 아예 존재하지 않았음. 즉 지금까지 보고된 두 번의 스테레오 캘리브레이션 실패(RMS 28/25, RMS 62/82)가 모두 실제로는 같은 구버전 스크립트로 실행된 것이었고, ChArUco 방식은 한 번도 실제로 테스트되지 않았음 | GitHub 업로드를 위해 사용자 컴퓨터(`C:\Temp\python\mini3d_scanner`)에 연결해 `device_list_dir`로 파일 크기를 대조하다가 발견. 최신 코드가 담긴 zip을 사용자 컴퓨터로 직접 전송한 뒤 그 자리에서 압축 해제(덮어쓰기)하여 동기화하고, 그 상태로 GitHub 저장소에 최초 업로드함. 이후로는 GitHub 저장소가 기준(source of truth)이 되므로, 다음부터는 새 코드를 받을 때 `git pull`로 동기화하면 이런 누락을 예방할 수 있음. |
+| 해결됨 | **사용자 컴퓨터의 로컬 프로젝트 폴더가 매번 전달한 zip 내용으로 갱신되지 않고 있었음** — `calibrate_stereo.py`가 7,203바이트(최초 일반 체커보드 버전 그대로, 최신본은 15,889바이트)였고 `generate_charuco_board.py`/`data/charuco_10x7.png`가 아예 존재하지 않았음. 즉 지금까지 보고된 두 번의 스테레오 캘리브레이션 실패(RMS 28/25, RMS 62/82)가 모두 실제로는 같은 구버전 스크립트로 실행된 것이었고, ChArUco 방식은 한 번도 실제로 테스트되지 않았음 | GitHub 업로드를 위해 사용자 컴퓨터(`C:\Temp\python\mini3d_scanner`)에 연결해 `device_list_dir`로 파일 크기를 대조하다가 발견. 최신 코드 파일들을 사용자 컴퓨터의 실제 경로에 직접 써서(아래 이슈 항목 참고) 동기화 완료. 이후로는 GitHub 저장소가 기준(source of truth)이 되므로, 다음부터는 새 코드를 받을 때 `git pull`로 동기화하면 이런 누락을 예방할 수 있음. |
+| 정보/우회 | **사용자 컴퓨터의 원격 셸(`device_bash`)이 동작하지 않음** — "2026-09-08 Windows 업데이트로 인해 Claude의 원격 작업 환경이 파일에 접근하지 못한다"는 알려진 문제(Anthropic 측 확인/추적 중)로, `git init`/`add`/`commit`/`push` 같은 명령을 대신 실행해 줄 수 없었음 | 파일 동기화는 `device_bash` 없이도 되는 `device_commit_files`(파일 단위 직접 쓰기)로 20개 파일을 사용자 컴퓨터 경로에 그대로 전송해서 해결. Git 저장소 초기화 및 GitHub 푸시는 사용자가 PowerShell/터미널에서 안내받은 명령어를 직접 실행하는 방식으로 대체. 나중에 이 문제가 해결되면 이후 동기화/커밋 작업은 다시 자동으로 대행 가능. |
+| 해결됨 | **GitHub에 최초 업로드한 저장소 용량이 60.96MiB/274개 오브젝트로 비정상적으로 큼** (예상은 20개 파일, ~90KB) — 확인해보니 캘리브레이션 촬영 사진 수백 장이 그대로 커밋되어 있었음 | 원인: `.gitignore`가 `data/calibration_images/cam0`,`cam1`,`cam2` 폴더만 제외했는데, 실제 스테레오 캘리브레이션 사진은 `stereo_0_1`,`stereo_0_2`라는 별도 폴더에 저장되고 있어 제외 대상에서 빠져 있었음(단일 캘리브레이션용 폴더명만 알고 있었고 스테레오용 저장 경로는 확인하지 않은 채 작성한 실수). `.gitignore`를 `data/calibration_images/**` 재귀 패턴(+ `.gitkeep`만 예외)으로 교체해 하위 폴더 이름에 상관없이 걸리도록 수정. 이미 커밋된 사진은 `git rm -r --cached`로 인덱스에서만 제거(디스크 파일은 안전하게 유지) → `git commit --amend` → `git push --force`로 히스토리까지 깨끗하게 정리(커밋이 1개뿐인 갓 만든 개인 저장소라 안전). 같은 정리 과정에서 데스크톱 앱이 전달 파일을 자동 저장해두는 `Claude outputs/` 폴더도 같이 커밋되어 있던 것을 발견해 함께 제외. 최종 21개 파일/39.56KiB/28개 오브젝트로 정상화. |
 
