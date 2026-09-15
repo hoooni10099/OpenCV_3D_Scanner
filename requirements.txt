@@ -1,0 +1,12 @@
+# 핵심 파이프라인 의존성 (카메라 인식, 캘리브레이션, 촬영, 삼각측량).
+# Python 3.13 등 최신 버전에서도 문제없이 설치됩니다.
+opencv-contrib-python>=4.9.0
+numpy>=1.24
+scipy>=1.11
+tqdm>=4.66
+matplotlib>=3.8
+Pillow>=10.0
+
+# 포인트 클라우드 후처리(노이즈 제거)/고급 시각화가 필요할 때만:
+# requirements-viz.txt 를 참고하세요 (Open3D는 Python 3.12 이하에서만 설치 가능,
+# 2026-09-15 기준 3.13/3.14 미지원 - 이슈: https://github.com/isl-org/Open3D/issues/7318).

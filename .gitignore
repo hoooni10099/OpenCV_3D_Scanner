@@ -1,0 +1,31 @@
+# 파이썬
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# 캘리브레이션/촬영 결과물 (용량 크고 사람마다 다름 - 저장소에는 올리지 않음, 폴더 구조만 .gitkeep로 유지)
+# 하위에 어떤 폴더가 생기든(cam0/cam1/cam2, stereo_0_1/stereo_0_2 등) 전부 걸리도록 ** 패턴 사용
+data/calibration_images/**
+data/captures/**
+data/output/**
+!data/calibration_images/**/
+!data/captures/**/
+!data/output/**/
+!**/.gitkeep
+
+# 기준 보드 이미지(체커보드/ChArUco)는 저장소에 유지 (용량 작고 재사용 필요)
+!data/checkerboard_9x6.png
+!data/charuco_10x7.png
+
+# OS/에디터
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude(Cowork)가 대화창으로 보낸 파일을 자동 저장하는 폴더 - 프로젝트 소스 아님
+Claude outputs/
